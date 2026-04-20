@@ -1,1 +1,31 @@
+name: Waves Free Tier Pipeline
 
+on:
+  schedule:
+    - cron: "0 8,20 * * *"  # 2 veces por día (UTC)
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          WORKER_URL: ${{ secrets.WORKER_URL }}
+          WORKER_API_KEY: ${{ secrets.WORKER_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python src/main.py
