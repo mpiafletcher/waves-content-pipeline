@@ -1,3 +1,4 @@
+import json
 from fetch_sources import fetch_sources
 from rss_parser import parse_rss
 from dedupe import build_dedupe_key, build_variant_key
@@ -16,11 +17,30 @@ def run():
             dedupe_key = build_dedupe_key(item["title"], item["url"])
             variant_key = build_variant_key(dedupe_key, source["language"])
 
-            story_json = generate_story(
+            story_raw = generate_story(
                 item,
                 source["categories"]["name"],
                 source["language"]
             )
+
+            try:
+                story = json.loads(story_raw)
+            except json.JSONDecodeError as e:
+                print({
+                    "error": "invalid_openai_json",
+                    "detail": str(e),
+                    "raw_preview": story_raw[:500]
+                })
+                continue
+
+            script = story.get("script", "").strip()
+            if not script:
+                print({
+                    "error": "missing_script",
+                    "title": item["title"],
+                    "raw_preview": story_raw[:500]
+                })
+                continue
 
             episode = {
                 "category_id": source["category_id"],
@@ -29,16 +49,17 @@ def run():
                 "language": source["language"],
                 "source_language": source["source_language"],
                 "topic": source["categories"]["name"],
-                "dedupe_key": variant_key
+                "title": story.get("title"),
+                "title_internal": story.get("title_internal"),
+                "caption": story.get("caption"),
+                "subtopic": story.get("subtopic"),
+                "duration_sec": story.get("estimated_duration_sec"),
+                "subtitles_json": story.get("subtitles", []),
+                "dedupe_key": variant_key,
             }
 
-            result = send_to_putter(
-                story_json,
-                episode
-            )
-
+            result = send_to_putter(script, episode)
             print(result)
-
 
 if __name__ == "__main__":
     run()
