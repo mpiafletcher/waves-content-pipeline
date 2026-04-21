@@ -64,7 +64,9 @@ def run():
                 "subtitles_json": story.get("subtitles", []),
                 "dedupe_key": variant_key,
             }
-
+            
+            print("SCRIPT PREVIEW:", script[:300])
+            print("SCRIPT TYPE:", type(script))   
             result = send_to_putter(script, episode)
             print(result)
 
