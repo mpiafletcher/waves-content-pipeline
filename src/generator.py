@@ -1,36 +1,69 @@
 from openai import OpenAI
 import os
 import json
+import re
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
+def slugify(value: str) -> str:
+    value = (value or "").strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "_", value)
+    value = re.sub(r"_+", "_", value).strip("_")
+    return value or "story"
+
+
 def generate_story(item, category, output_language):
-    # ✅ safe description fallback
     description = item.get("summary") or item.get("description") or ""
 
-    # ✅ CLEAN prompt (single, no duplicates, no code inside)
     prompt = f"""
-You are a news editor generating a premium audio-news episode.
+You are writing a short audio news script for a mobile news app.
 
 Language: {output_language}
 
-Create a short podcast script based on:
+Write one clean, engaging news item based on the source below.
 
-Title: {item.get('title', '')}
-Description: {description}
+Rules:
+- Start directly with the news. No greetings.
+- Do NOT say things like:
+  - "Welcome to today's episode"
+  - "In today's episode"
+  - "Today we're diving into"
+  - "Let's take a look"
+- The opening line must be specific and catchy, centered on the actual news.
+- Sound sharp, natural, informed, and concise.
+- Explain the news clearly, but do not over-explain.
+- Add context only if it truly helps.
+- Do not force big-picture analysis if the story does not need it.
+- Do not use bullet points in the script.
+- Keep it fluid for audio.
+- Aim for roughly 60 to 120 seconds.
+- Return ONLY valid JSON.
 
-Return ONLY valid JSON with:
-- title
-- title_internal
-- caption
-- script
-- subtitles
-
-Source: {item.get('url', '')}
+Story title: {item.get('title', '')}
+Story description: {description}
+Source URL: {item.get('url', '')}
 Category: {category}
 
-Write naturally for audio.
+Return JSON with exactly these fields:
+{{
+  "title": "short user-facing title",
+  "title_internal": "short internal title",
+  "caption": "1 short teaser sentence",
+  "subtopic": "specific_subtopic",
+  "script": "full audio script",
+  "estimated_duration_sec": 90,
+  "subtitles": [
+    {{ "text": "subtitle chunk 1" }},
+    {{ "text": "subtitle chunk 2" }}
+  ]
+}}
+
+Subtitle rules:
+- subtitles must use the exact wording of the script
+- no paraphrasing
+- split naturally for pacing
+- 6 to 10 chunks
 """
 
     try:
@@ -40,19 +73,30 @@ Write naturally for audio.
                 {"role": "system", "content": "You output only valid JSON."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
+            temperature=0.6,
         )
 
         content = res.choices[0].message.content.strip()
 
-        # 🔥 clean markdown if model wraps JSON
         if content.startswith("```"):
             content = content.replace("```json", "").replace("```", "").strip()
 
         data = json.loads(content)
 
+        if not data.get("title_internal"):
+            data["title_internal"] = slugify(data.get("title", item.get("title", "story")))
+
+        if not data.get("subtopic"):
+            data["subtopic"] = "general"
+
+        if not data.get("estimated_duration_sec"):
+            data["estimated_duration_sec"] = 90
+
+        if not isinstance(data.get("subtitles"), list):
+            data["subtitles"] = []
+
         return data
 
     except Exception as e:
-        print("❌ OpenAI error:", str(e))
+        print("OpenAI error:", str(e))
         return None
