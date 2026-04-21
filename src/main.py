@@ -10,15 +10,15 @@ def run():
     sources = fetch_sources()
 
     if TEST_MODE:
-    sources = sources[:1]
+        sources = sources[:1]
 
     for source in sources:
         print(f"Processing {source['source_name']} ({source['language']})")
 
         items = parse_rss(source["source_url"])
 
-        if TEST_MODE:
-            items = items[:1]
+    if TEST_MODE:
+        items = items[:1]
 
         for item in items:
             dedupe_key = build_dedupe_key(item["title"], item["url"])
