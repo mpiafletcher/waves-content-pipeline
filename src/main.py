@@ -10,14 +10,7 @@ from putter_client import send_to_putter
 from make_client import send_to_make
 
 TEST_MODE = True
-
-# audio_mode:
-# - "make_only"
-# - "putter_only"
-# - "putter_with_fallback"
-AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
-
-# Optional test filters
+AUDIO_MODE = os.getenv("AUDIO_MODE", "putter_with_fallback").lower()
 TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
 TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
 
@@ -27,6 +20,34 @@ def slugify(value: str) -> str:
     value = re.sub(r"[^a-z0-9]+", "_", value)
     value = re.sub(r"_+", "_", value).strip("_")
     return value or "general"
+
+
+def build_timed_subtitles(subtitles, language="en"):
+    if not isinstance(subtitles, list):
+        return []
+
+    chars_per_second = 13 if str(language).startswith("es") else 15
+    timed = []
+    cursor = 0
+
+    for seg in subtitles:
+        text = (seg.get("text") or "").strip()
+        if not text:
+            continue
+
+        duration_ms = max(800, round((len(text) / chars_per_second) * 1000))
+        start_ms = cursor
+        end_ms = cursor + duration_ms
+
+        timed.append({
+            "text": text,
+            "start_ms": start_ms,
+            "end_ms": end_ms
+        })
+
+        cursor = end_ms
+
+    return timed
 
 
 def build_tts_payload(script: str, episode: dict) -> dict:
@@ -42,7 +63,7 @@ def build_tts_payload(script: str, episode: dict) -> dict:
     digest_date = episode.get("digest_date")
     topic_slug = slugify(episode.get("topic"))
     title_slug = slugify(episode.get("title_internal") or episode.get("title") or "episode")
-    
+
     path = f"free/{digest_date}/{topic_slug}/{title_slug}.mp3"
     category = f"free/{digest_date}/{topic_slug}"
 
@@ -151,6 +172,10 @@ def run():
 
             subtopic = story.get("subtopic") or "general"
             digest_date = datetime.utcnow().strftime("%Y-%m-%d")
+            timed_subtitles = build_timed_subtitles(
+                story.get("subtitles", []),
+                source["language"]
+            )
 
             episode = {
                 "tier": "free",
@@ -171,7 +196,7 @@ def run():
                 "dedupe_key": variant_key,
                 "source_language": source["source_language"],
                 "language": source["language"],
-                "subtitles_json": story.get("subtitles", []),
+                "subtitles_json": timed_subtitles,
                 "is_shareable": False,
                 "share_slug": None
             }
