@@ -1,9 +1,9 @@
 name: Waves Free Tier Pipeline
 
 on:
-  schedule:
-    - cron: "0 8,20 * * *"  # 2 veces por día (UTC)
   workflow_dispatch:
+  schedule:
+    - cron: '0 8,20 * * *'
 
 jobs:
   run-pipeline:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -28,4 +28,8 @@ jobs:
           WORKER_URL: ${{ secrets.WORKER_URL }}
           WORKER_API_KEY: ${{ secrets.WORKER_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+          AUDIO_MODE: make_only
+          TEST_SOURCE_NAME: MarketWatch Top Stories
+          TEST_LANGUAGE: en
         run: python src/main.py
