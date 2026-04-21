@@ -5,6 +5,7 @@ from rss_parser import parse_rss
 from dedupe import build_dedupe_key, build_variant_key
 from generator import generate_story
 from putter_client import send_to_putter
+from datetime import datetime
 
 def run():
     sources = fetch_sources()
@@ -50,19 +51,27 @@ def run():
                 continue
 
             episode = {
+                "tier": "free",
                 "category_id": source["category_id"],
-                "source_url": item["url"],
-                "source_name": source["source_name"],
-                "language": source["language"],
-                "source_language": source["source_language"],
-                "topic": source["categories"]["name"],
                 "title": story.get("title"),
                 "title_internal": story.get("title_internal"),
                 "caption": story.get("caption"),
-                "subtopic": story.get("subtopic"),
                 "duration_sec": story.get("estimated_duration_sec"),
-                "subtitles_json": story.get("subtitles", []),
+                "score": 0,
+                "source_url": item["url"],
+                "source_name": source["source_name"],
+                "digest_date": datetime.utcnow().strftime("%Y-%m-%d"),
+                "status": "ready",
+                "region": source["region"],
+                "topic": source["categories"]["name"],
+                "subtopic": story.get("subtopic"),
+                "segment_key": f"{source['categories']['name']}|{story.get('subtopic')}|{source['region']}|{source['language']}",
                 "dedupe_key": variant_key,
+                "source_language": source["source_language"],
+                "language": source["language"],
+                "subtitles_json": story.get("subtitles", []),
+                "is_shareable": False,
+                "share_slug": None
             }
             
             print("SCRIPT PREVIEW:", script[:300])
