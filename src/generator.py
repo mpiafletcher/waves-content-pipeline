@@ -30,7 +30,7 @@ Rules:
   - "In today's episode"
   - "Today we're diving into"
   - "Let's take a look"
-- The opening line must be specific and catchy, centered on the actual news.
+- The opening line must be specific and centered on the actual news.
 - Sound sharp, natural, informed, and concise.
 - Explain the news clearly, but do not over-explain.
 - Add context only if it truly helps.
