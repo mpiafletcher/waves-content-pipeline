@@ -41,11 +41,10 @@ def build_tts_payload(script: str, episode: dict) -> dict:
 
     digest_date = episode.get("digest_date")
     topic_slug = slugify(episode.get("topic"))
-    subtopic_slug = slugify(episode.get("subtopic") or "general")
     title_slug = slugify(episode.get("title_internal") or episode.get("title") or "episode")
-
-    path = f"free/{digest_date}/{topic_slug}/{subtopic_slug}/{title_slug}.mp3"
-    category = f"free/{digest_date}/{topic_slug}/{subtopic_slug}"
+    
+    path = f"free/{digest_date}/{topic_slug}/{title_slug}.mp3"
+    category = f"free/{digest_date}/{topic_slug}"
 
     return {
         "text": script,
