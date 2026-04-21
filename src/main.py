@@ -1,5 +1,6 @@
-from datetime import datetime
+import os
 import re
+from datetime import datetime
 
 from fetch_sources import fetch_sources
 from rss_parser import parse_rss, is_recent
@@ -10,6 +11,16 @@ from make_client import send_to_make
 
 TEST_MODE = True
 
+# audio_mode:
+# - "make_only"
+# - "putter_only"
+# - "putter_with_fallback"
+AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
+
+# Optional test filters
+TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
+TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
+
 
 def slugify(value: str) -> str:
     value = (value or "").strip().lower()
@@ -18,8 +29,8 @@ def slugify(value: str) -> str:
     return value or "general"
 
 
-def build_tts_payload(script, episode):
-    language = episode.get("language", "en")
+def build_tts_payload(script: str, episode: dict) -> dict:
+    language = (episode.get("language") or "en").lower()
 
     if language.startswith("es"):
         voice = "Lucia"
@@ -51,11 +62,53 @@ def build_tts_payload(script, episode):
     }
 
 
-def run():
-    sources = fetch_sources()
+def select_sources(sources: list[dict]) -> list[dict]:
+    selected = sources
+
+    if TEST_SOURCE_NAME:
+        selected = [s for s in selected if s.get("source_name") == TEST_SOURCE_NAME]
+
+    if TEST_LANGUAGE:
+        selected = [s for s in selected if s.get("language") == TEST_LANGUAGE]
 
     if TEST_MODE:
-        sources = sources[:1]
+        selected = selected[:1]
+
+    return selected
+
+
+def send_audio(payload: dict) -> None:
+    if AUDIO_MODE == "make_only":
+        print("➡️ AUDIO_MODE=make_only")
+        make_result = send_to_make(payload)
+        print("MAKE RESULT:", make_result)
+        return
+
+    if AUDIO_MODE == "putter_only":
+        print("➡️ AUDIO_MODE=putter_only")
+        putter_result = send_to_putter(payload)
+        print("PUTTER RESULT:", putter_result)
+        return
+
+    print("➡️ AUDIO_MODE=putter_with_fallback")
+    putter_result = send_to_putter(payload)
+
+    if putter_result.get("success"):
+        print("✅ PUTTER SUCCESS")
+        print(putter_result)
+    else:
+        print("⚠️ PUTTER FAILED → FALLBACK TO MAKE")
+        make_result = send_to_make(payload)
+        print("MAKE RESULT:", make_result)
+
+
+def run():
+    sources = fetch_sources()
+    sources = select_sources(sources)
+
+    if not sources:
+        print("No sources matched current filters.")
+        return
 
     for source in sources:
         print(f"Processing {source['source_name']} ({source['language']})")
@@ -65,6 +118,10 @@ def run():
 
         if TEST_MODE:
             items = items[:1]
+
+        if not items:
+            print("No recent items found.")
+            continue
 
         for item in items:
             dedupe_key = build_dedupe_key(item["title"], item["url"])
@@ -124,16 +181,9 @@ def run():
 
             print("SCRIPT PREVIEW:", script[:300])
             print("SCRIPT TYPE:", type(script))
+            print("PAYLOAD PATH:", payload["path"])
 
-            putter_result = send_to_putter(payload)
-
-            if putter_result.get("success"):
-                print("✅ PUTTER SUCCESS")
-                print(putter_result)
-            else:
-                print("⚠️ PUTTER FAILED → FALLBACK TO MAKE")
-                make_result = send_to_make(payload)
-                print("MAKE RESULT:", make_result)
+            send_audio(payload)
 
 
 if __name__ == "__main__":
