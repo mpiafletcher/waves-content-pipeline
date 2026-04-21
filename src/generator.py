@@ -10,7 +10,12 @@ You are generating a premium audio-news episode.
 Language: {output_language}
 
 Story title: {item['title']}
-Story description: {item['description']}
+description = item.get("summary") or item.get("description") or ""
+
+prompt = f"""
+Story title: {item['title']}
+Story description: {description}
+"""
 Source: {item['url']}
 Category: {category}
 
