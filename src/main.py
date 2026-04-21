@@ -1,11 +1,13 @@
-TEST_MODE = True
-import json
+from datetime import datetime
+
 from fetch_sources import fetch_sources
-from rss_parser import parse_rss
+from rss_parser import parse_rss, is_recent
 from dedupe import build_dedupe_key, build_variant_key
 from generator import generate_story
 from putter_client import send_to_putter
-from datetime import datetime
+
+TEST_MODE = True
+
 
 def run():
     sources = fetch_sources()
@@ -17,36 +19,35 @@ def run():
         print(f"Processing {source['source_name']} ({source['language']})")
 
         items = parse_rss(source["source_url"])
+        items = [item for item in items if is_recent(item, 6)]
 
-    if TEST_MODE:
-        items = items[:1]
+        if TEST_MODE:
+            items = items[:1]
 
         for item in items:
             dedupe_key = build_dedupe_key(item["title"], item["url"])
             variant_key = build_variant_key(dedupe_key, source["language"])
 
-            story_raw = generate_story(
+            story = generate_story(
                 item,
                 source["categories"]["name"],
                 source["language"]
             )
 
-            try:
-                story = json.loads(story_raw)
-            except json.JSONDecodeError as e:
+            if not story:
                 print({
-                    "error": "invalid_openai_json",
-                    "detail": str(e),
-                    "raw_preview": story_raw[:500]
+                    "error": "story_generation_failed",
+                    "title": item.get("title"),
+                    "source": source.get("source_name")
                 })
                 continue
 
-            script = story.get("script", "").strip()
+            script = (story.get("script") or "").strip()
             if not script:
                 print({
                     "error": "missing_script",
-                    "title": item["title"],
-                    "raw_preview": story_raw[:500]
+                    "title": item.get("title"),
+                    "story_preview": str(story)[:500]
                 })
                 continue
 
@@ -62,10 +63,10 @@ def run():
                 "source_name": source["source_name"],
                 "digest_date": datetime.utcnow().strftime("%Y-%m-%d"),
                 "status": "ready",
-                "region": source["region"],
+                "region": source.get("region"),
                 "topic": source["categories"]["name"],
                 "subtopic": story.get("subtopic"),
-                "segment_key": f"{source['categories']['name']}|{story.get('subtopic')}|{source['region']}|{source['language']}",
+                "segment_key": f"{source['categories']['name']}|{story.get('subtopic')}|{source.get('region')}|{source['language']}",
                 "dedupe_key": variant_key,
                 "source_language": source["source_language"],
                 "language": source["language"],
@@ -73,11 +74,13 @@ def run():
                 "is_shareable": False,
                 "share_slug": None
             }
-            
+
             print("SCRIPT PREVIEW:", script[:300])
-            print("SCRIPT TYPE:", type(script))   
+            print("SCRIPT TYPE:", type(script))
+
             result = send_to_putter(script, episode)
             print(result)
+
 
 if __name__ == "__main__":
     run()
