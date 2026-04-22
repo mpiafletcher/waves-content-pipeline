@@ -183,10 +183,11 @@ def run():
                 variant_key = build_variant_key(dedupe_key, source["language"])
 
                 story = generate_story(
-                    item,
-                    source["categories"]["name"],
-                    source["language"]
-                )
+                item=item,
+                category=source["categories"]["name"],
+                source_language=source["source_language"],
+                output_language=source["language"]
+            )
 
                 if not story:
                     print({
