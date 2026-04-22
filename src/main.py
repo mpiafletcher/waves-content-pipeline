@@ -225,7 +225,7 @@ def run():
                 "source_language": source["source_language"],
                 "language": source["language"],
                 "subtitles_json": timed_subtitles,
-                "is_shareable": False,
+                "is_shareable": TRUE,
                 "share_slug": ""
             }
 
