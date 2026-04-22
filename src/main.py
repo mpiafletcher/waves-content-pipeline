@@ -225,9 +225,8 @@ def run():
                 "source_language": source["source_language"],
                 "language": source["language"],
                 "subtitles_json": timed_subtitles,
-                "subtitles_json_string": json.dumps(timed_subtitles),
                 "is_shareable": False,
-                "share_slug": None
+                "share_slug": ""
             }
 
             validate_episode(episode)
