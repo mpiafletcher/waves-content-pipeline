@@ -13,15 +13,17 @@ def slugify(value: str) -> str:
     return value or "story"
 
 
-def generate_story(item, category, output_language):
+def generate_story(item, category, source_language, output_language):
     description = item.get("summary") or item.get("description") or ""
 
     prompt = f"""
 You are writing a short audio news script for a mobile news app.
 
-Language: {output_language}
+Source language: {source_language}
+Output language: {output_language}
 
-Write one clean, engaging news item based on the source below.
+You are given a news item that may be written in a different language than the final output.
+Read and understand the source in its original language, then write the final script fully in the output language.
 
 Rules:
 - Start directly with the news. No greetings.
@@ -39,6 +41,7 @@ Rules:
 - Keep it fluid for audio.
 - Aim for roughly 60 to 120 seconds.
 - Return ONLY valid JSON.
+- The final title, caption, subtopic, script and subtitles must all be in the output language.
 
 Story title: {item.get('title', '')}
 Story description: {description}
