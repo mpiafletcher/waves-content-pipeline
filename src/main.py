@@ -208,7 +208,7 @@ def run():
                 "language": source["language"],
                 "subtitles_json": timed_subtitles,
                 "is_shareable": False,
-                "share_slug": None
+                "share_slug": ""
             }
 
             payload = build_tts_payload(script, episode)
