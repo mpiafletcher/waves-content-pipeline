@@ -96,7 +96,7 @@ def build_tts_payload(script: str, episode: dict) -> dict:
             "language": tts_language,
             "engine": "standard"
         },
-        "test_mode": False,
+        "test_mode": True,
         "episode": episode
     }
 
