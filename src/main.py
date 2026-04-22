@@ -15,6 +15,8 @@ TEST_MODE = False
 AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
 TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
 TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
+ITEMS_PER_SOURCE = int(os.getenv("ITEMS_PER_SOURCE", "3"))
+MAX_EPISODES_PER_LANGUAGE = int(os.getenv("MAX_EPISODES_PER_LANGUAGE", "5"))
 
 
 def slugify(value: str) -> str:
@@ -111,9 +113,6 @@ def select_sources(sources):
     if TEST_LANGUAGE:
         selected = [s for s in selected if s.get("language") == TEST_LANGUAGE]
 
-    if TEST_MODE:
-        selected = selected[:1]
-
     return selected
 
 
@@ -150,95 +149,113 @@ def run():
         print("No sources matched current filters.")
         return
 
-    for source in sources:
-        print(f"Processing {source['source_name']} ({source['language']})")
+    languages_to_process = ["en", "es"]
+    produced_count = {lang: 0 for lang in languages_to_process}
 
-        items = parse_rss(source["source_url"])
-        items = [item for item in items if is_recent(item, 6)]
+    for lang in languages_to_process:
+        lang_sources = [s for s in sources if s.get("language") == lang]
 
-        if TEST_MODE:
-            items = items[:1]
-
-        if not items:
-            print("No recent items found.")
+        if not lang_sources:
+            print(f"No sources for language: {lang}")
             continue
 
-        for item in items:
-            dedupe_key = build_dedupe_key(item["title"], item["url"])
-            variant_key = build_variant_key(dedupe_key, source["language"])
+        print(f"--- Processing language: {lang} ---")
 
-            story = generate_story(
-                item,
-                source["categories"]["name"],
-                source["language"]
-            )
+        for source in lang_sources:
+            if produced_count[lang] >= MAX_EPISODES_PER_LANGUAGE:
+                break
 
-            if not story:
-                print({
-                    "error": "story_generation_failed",
-                    "title": item.get("title"),
-                    "source": source.get("source_name")
-                })
+            print(f"Processing {source['source_name']} ({source['language']})")
+
+            items = parse_rss(source["source_url"])
+            items = [item for item in items if is_recent(item, 24)]
+            items = items[:ITEMS_PER_SOURCE]
+
+            if not items:
+                print("No recent items found.")
                 continue
 
-            script = (story.get("script") or "").strip()
-            if not script:
-                print({
-                    "error": "missing_script",
-                    "title": item.get("title"),
-                    "story_preview": str(story)[:500]
-                })
-                continue
+            for item in items:
+                if produced_count[lang] >= MAX_EPISODES_PER_LANGUAGE:
+                    break
 
-            subtopic = story.get("subtopic") or "general"
-            digest_date = datetime.utcnow().strftime("%Y-%m-%d")
+                dedupe_key = build_dedupe_key(item["title"], item["url"])
+                variant_key = build_variant_key(dedupe_key, source["language"])
 
-            duration_sec = story.get("estimated_duration_sec") or 90
-            try:
-                duration_sec = float(duration_sec)
-            except Exception:
-                duration_sec = 90.0
+                story = generate_story(
+                    item,
+                    source["categories"]["name"],
+                    source["language"]
+                )
 
-            timed_subtitles = build_timed_subtitles(
-                story.get("subtitles", []),
-                duration_sec,
-                source["language"]
-            )
+                if not story:
+                    print({
+                        "error": "story_generation_failed",
+                        "title": item.get("title"),
+                        "source": source.get("source_name")
+                    })
+                    continue
 
-            episode = {
-                "tier": "free",
-                "category_id": source["category_id"],
-                "title": story.get("title"),
-                "title_internal": story.get("title_internal"),
-                "caption": story.get("caption"),
-                "duration_sec": duration_sec,
-                "score": 0,
-                "source_url": item["url"],
-                "source_name": source["source_name"],
-                "digest_date": digest_date,
-                "status": "ready",
-                "region": source.get("region"),
-                "topic": source["categories"]["name"],
-                "subtopic": subtopic,
-                "segment_key": f"{source['categories']['name']}|{subtopic}|{source.get('region')}|{source['language']}",
-                "dedupe_key": variant_key,
-                "source_language": source["source_language"],
-                "language": source["language"],
-                "subtitles_json": timed_subtitles,
-                "is_shareable": True,
-                "share_slug": ""
-            }
+                script = (story.get("script") or "").strip()
+                if not script:
+                    print({
+                        "error": "missing_script",
+                        "title": item.get("title"),
+                        "story_preview": str(story)[:500]
+                    })
+                    continue
 
-            validate_episode(episode)
+                subtopic = story.get("subtopic") or "general"
+                digest_date = datetime.utcnow().strftime("%Y-%m-%d")
 
-            payload = build_tts_payload(script, episode)
+                duration_sec = story.get("estimated_duration_sec") or 90
+                try:
+                    duration_sec = float(duration_sec)
+                except Exception:
+                    duration_sec = 90.0
 
-            print("SCRIPT PREVIEW:", script[:250])
-            print("SUBTITLES PREVIEW:", json.dumps(episode["subtitles_json"][:2], indent=2))
-            print("PAYLOAD PATH:", payload["path"])
+                timed_subtitles = build_timed_subtitles(
+                    story.get("subtitles", []),
+                    duration_sec,
+                    source["language"]
+                )
 
-            send_audio(payload)
+                episode = {
+                    "tier": "free",
+                    "category_id": source["category_id"],
+                    "title": story.get("title"),
+                    "title_internal": story.get("title_internal"),
+                    "caption": story.get("caption"),
+                    "duration_sec": duration_sec,
+                    "score": 0,
+                    "source_url": item["url"],
+                    "source_name": source["source_name"],
+                    "digest_date": digest_date,
+                    "status": "ready",
+                    "region": source.get("region"),
+                    "topic": source["categories"]["name"],
+                    "subtopic": subtopic,
+                    "segment_key": f"{source['categories']['name']}|{subtopic}|{source.get('region')}|{source['language']}",
+                    "dedupe_key": variant_key,
+                    "source_language": source["source_language"],
+                    "language": source["language"],
+                    "subtitles_json": timed_subtitles,
+                    "is_shareable": False,
+                    "share_slug": None
+                }
 
+                validate_episode(episode)
+
+                payload = build_tts_payload(script, episode)
+
+                print("SCRIPT PREVIEW:", script[:250])
+                print("SUBTITLES PREVIEW:", json.dumps(episode["subtitles_json"][:2], indent=2))
+                print("PAYLOAD PATH:", payload["path"])
+
+                send_audio(payload)
+                produced_count[lang] += 1
+
+        print(f"Done {lang}: {produced_count[lang]} episodes")
 
 if __name__ == "__main__":
     run()
