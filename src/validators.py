@@ -66,9 +66,7 @@ def validate_subtitles_json(subtitles_json):
             raise ValueError(f"subtitles_json[{i}] end_ms must be greater than start_ms")
 
         if i > 0 and start_ms < prev_end:
-            raise ValueError(
-                f"subtitles_json[{i}] starts before previous subtitle ends"
-            )
+            raise ValueError(f"subtitles_json[{i}] starts before previous subtitle ends")
 
         prev_end = end_ms
 
