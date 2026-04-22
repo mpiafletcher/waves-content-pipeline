@@ -1,5 +1,6 @@
 import os
 import re
+import json
 from datetime import datetime
 
 from fetch_sources import fetch_sources
@@ -8,9 +9,10 @@ from dedupe import build_dedupe_key, build_variant_key
 from generator import generate_story
 from putter_client import send_to_putter
 from make_client import send_to_make
+from validators import validate_episode, validate_tts_payload
 
 TEST_MODE = True
-AUDIO_MODE = os.getenv("AUDIO_MODE", "putter_with_fallback").lower()
+AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
 TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
 TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
 
@@ -35,7 +37,12 @@ def build_timed_subtitles(subtitles, total_duration_sec, language="en"):
     if not cleaned:
         return []
 
-    total_duration_ms = float(total_duration_sec) * 1000.0
+    try:
+        total_duration_sec = float(total_duration_sec)
+    except Exception:
+        total_duration_sec = 90.0
+
+    total_duration_ms = total_duration_sec * 1000.0
     chunk_duration_ms = total_duration_ms / len(cleaned)
 
     timed = []
@@ -77,7 +84,7 @@ def build_tts_payload(script: str, episode: dict) -> dict:
     path = f"free/{digest_date}/{topic_slug}/{title_slug}.mp3"
     category = f"free/{digest_date}/{topic_slug}"
 
-    return {
+    payload = {
         "text": script,
         "path": path,
         "category": category,
@@ -91,8 +98,11 @@ def build_tts_payload(script: str, episode: dict) -> dict:
         "episode": episode
     }
 
+    validate_tts_payload(payload)
+    return payload
 
-def select_sources(sources: list[dict]) -> list[dict]:
+
+def select_sources(sources):
     selected = sources
 
     if TEST_SOURCE_NAME:
@@ -107,7 +117,7 @@ def select_sources(sources: list[dict]) -> list[dict]:
     return selected
 
 
-def send_audio(payload: dict) -> None:
+def send_audio(payload):
     if AUDIO_MODE == "make_only":
         print("➡️ AUDIO_MODE=make_only")
         make_result = send_to_make(payload)
@@ -182,8 +192,16 @@ def run():
 
             subtopic = story.get("subtopic") or "general"
             digest_date = datetime.utcnow().strftime("%Y-%m-%d")
+
+            duration_sec = story.get("estimated_duration_sec") or 90
+            try:
+                duration_sec = float(duration_sec)
+            except Exception:
+                duration_sec = 90.0
+
             timed_subtitles = build_timed_subtitles(
                 story.get("subtitles", []),
+                duration_sec,
                 source["language"]
             )
 
@@ -193,7 +211,7 @@ def run():
                 "title": story.get("title"),
                 "title_internal": story.get("title_internal"),
                 "caption": story.get("caption"),
-                "duration_sec": story.get("estimated_duration_sec") or 0,
+                "duration_sec": duration_sec,
                 "score": 0,
                 "source_url": item["url"],
                 "source_name": source["source_name"],
@@ -207,14 +225,17 @@ def run():
                 "source_language": source["source_language"],
                 "language": source["language"],
                 "subtitles_json": timed_subtitles,
+                "subtitles_json_string": json.dumps(timed_subtitles),
                 "is_shareable": False,
-                "share_slug": ""
+                "share_slug": None
             }
+
+            validate_episode(episode)
 
             payload = build_tts_payload(script, episode)
 
-            print("SCRIPT PREVIEW:", script[:300])
-            print("SCRIPT TYPE:", type(script))
+            print("SCRIPT PREVIEW:", script[:250])
+            print("SUBTITLES PREVIEW:", json.dumps(episode["subtitles_json"][:2], indent=2))
             print("PAYLOAD PATH:", payload["path"])
 
             send_audio(payload)
