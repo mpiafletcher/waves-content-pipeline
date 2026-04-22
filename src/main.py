@@ -22,22 +22,32 @@ def slugify(value: str) -> str:
     return value or "general"
 
 
-def build_timed_subtitles(subtitles, language="en"):
-    if not isinstance(subtitles, list):
+def build_timed_subtitles(subtitles, total_duration_sec, language="en"):
+    if not isinstance(subtitles, list) or not subtitles:
         return []
 
-    chars_per_second = 13 if str(language).startswith("es") else 15
-    timed = []
-    cursor = 0
-
+    cleaned = []
     for seg in subtitles:
         text = (seg.get("text") or "").strip()
-        if not text:
-            continue
+        if text:
+            cleaned.append(text)
 
-        duration_ms = max(800, round((len(text) / chars_per_second) * 1000))
+    if not cleaned:
+        return []
+
+    total_duration_ms = float(total_duration_sec) * 1000.0
+    chunk_duration_ms = total_duration_ms / len(cleaned)
+
+    timed = []
+    cursor = 0.0
+
+    for i, text in enumerate(cleaned):
         start_ms = cursor
-        end_ms = cursor + duration_ms
+
+        if i == len(cleaned) - 1:
+            end_ms = total_duration_ms
+        else:
+            end_ms = cursor + chunk_duration_ms
 
         timed.append({
             "text": text,
