@@ -11,7 +11,7 @@ from putter_client import send_to_putter
 from make_client import send_to_make
 from validators import validate_episode, validate_tts_payload
 
-TEST_MODE = True
+TEST_MODE = False
 AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
 TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
 TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
