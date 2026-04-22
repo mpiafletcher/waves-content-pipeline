@@ -30,6 +30,6 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
           AUDIO_MODE: make_only
-          TEST_SOURCE_NAME: MarketWatch Top Stories
-          TEST_LANGUAGE: en
+          ITEMS_PER_SOURCE: 3
+          MAX_EPISODES_PER_LANGUAGE: 5
         run: python src/main.py
