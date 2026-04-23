@@ -222,10 +222,10 @@ def run():
             except Exception:
                 duration_sec = 90.0
 
-            timed_subtitles = build_timed_subtitles(
-                story.get("subtitles", []),
-                duration_sec,
-                output_language
+            #timed_subtitles = build_timed_subtitles(
+                #story.get("subtitles", []),
+                #duration_sec,
+                #output_language
             )
 
             episode = {
