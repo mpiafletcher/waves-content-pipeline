@@ -31,7 +31,7 @@ def slugify(value: str) -> str:
     return value or "general"
 
 
-def build_timed_subtitles(subtitles, total_duration_sec, language="en"):
+def build_timed_subtitles(subtitles, total_duration_sec, language="en", speed_multiplier=1.0):
     if not isinstance(subtitles, list) or not subtitles:
         return []
 
@@ -49,15 +49,15 @@ def build_timed_subtitles(subtitles, total_duration_sec, language="en"):
     except Exception:
         total_duration_sec = 90.0
 
-    total_duration_ms = total_duration_sec * 1000.0
-    chunk_duration_ms = total_duration_ms / len(cleaned)
+    effective_duration_ms = (total_duration_sec * 1000.0) / speed_multiplier
+    chunk_duration_ms = effective_duration_ms / len(cleaned)
 
     timed = []
     cursor = 0.0
 
     for i, text in enumerate(cleaned):
         start_ms = cursor
-        end_ms = total_duration_ms if i == len(cleaned) - 1 else cursor + chunk_duration_ms
+        end_ms = effective_duration_ms if i == len(cleaned) - 1 else cursor + chunk_duration_ms
 
         timed.append({
             "text": text,
@@ -225,7 +225,8 @@ def run():
             timed_subtitles = build_timed_subtitles(
                 story.get("subtitles", []),
                 duration_sec,
-                output_language
+                output_language,
+                speed_multiplier=1.5
             )
 
             episode = {
