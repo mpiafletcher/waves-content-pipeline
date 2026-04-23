@@ -17,9 +17,11 @@ AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
 TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
 TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
 
+# defaults producción
 ITEMS_PER_SOURCE = 3
 MAX_EPISODES_PER_LANGUAGE = 999999
 
+# override automático para test
 if TEST_MODE:
     ITEMS_PER_SOURCE = 1
     MAX_EPISODES_PER_LANGUAGE = 1
@@ -97,7 +99,7 @@ def build_tts_payload(script: str, episode: dict) -> dict:
             "language": tts_language,
             "engine": "standard"
         },
-        "test_mode": True,
+        "test_mode": False,
         "episode": episode
     }
 
@@ -159,6 +161,7 @@ def run():
         return
 
     produced_per_language = {}
+    episodes_with_subtitles = []
 
     for source in sources:
         output_language = source["language"]
@@ -223,6 +226,7 @@ def run():
             except Exception:
                 duration_sec = 90.0
 
+            # 1.5 = más rápido
             timed_subtitles = build_timed_subtitles(
                 story.get("subtitles", []),
                 duration_sec,
@@ -263,9 +267,23 @@ def run():
             print("PAYLOAD PATH:", payload["path"])
 
             send_audio(payload)
+
+            episodes_with_subtitles.append({
+                "dedupe_key": episode["dedupe_key"],
+                "subtitles_json": episode["subtitles_json"]
+            })
+
             produced_per_language[output_language] += 1
 
     print("DONE. Produced per language:", produced_per_language)
+
+    if episodes_with_subtitles:
+        filename, sql_content = build_subtitles_update_sql(episodes_with_subtitles)
+
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(sql_content)
+
+        print(f"Generated subtitles SQL file: {filename}")
 
 
 if __name__ == "__main__":
