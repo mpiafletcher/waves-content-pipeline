@@ -11,11 +11,14 @@ from putter_client import send_to_putter
 from make_client import send_to_make
 from validators import validate_episode, validate_tts_payload
 from subtitles_sql import build_subtitles_update_sql
+from premium.pipeline import run_premium_pipeline
 
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
 TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
 TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
+PIPELINE_MODE = os.getenv("PIPELINE_MODE", "free").lower()
+
 
 # defaults producción
 ITEMS_PER_SOURCE = 3
@@ -285,6 +288,14 @@ def run():
 
         print(f"Generated subtitles SQL file: {filename}")
 
-
+#if __name__ == "__main__":
+ #   premium_episodes = run_premium_pipeline()
+  #  print(f"Generated {len(premium_episodes)} premium episodes")
+   # run()
+    
 if __name__ == "__main__":
-    run()
+    if PIPELINE_MODE == "premium":
+        premium_episodes = run_premium_pipeline()
+        print(f"Generated {len(premium_episodes)} premium episodes")
+    else:
+        run()
