@@ -42,6 +42,28 @@ Rules:
 - Aim for roughly 60 to 120 seconds.
 - Return ONLY valid JSON.
 - The final title, caption, subtopic, script and subtitles must all be in the output language.
+For free-tier episodes, the subtopic must be a short, highly informative label that helps a user instantly understand what the episode is about.
+
+Prefer:
+1. Country or place name if central to the story
+2. Company or organization name if central
+3. Sector + event if more useful
+
+Good examples:
+- Iran Oil
+- Tesla Earnings
+- Google Workspace AI
+- Spain Markets
+- Mexico Startups
+- France Football
+
+Avoid vague labels like:
+- General News
+- Current Affairs
+- Market Update
+- Technology Trends
+
+Return a subtopic with 2 to 4 words max.
 
 Story title: {item.get('title', '')}
 Story description: {description}
