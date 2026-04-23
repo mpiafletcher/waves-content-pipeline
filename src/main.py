@@ -10,6 +10,7 @@ from generator import generate_story
 from putter_client import send_to_putter
 from make_client import send_to_make
 from validators import validate_episode, validate_tts_payload
+from subtitles_sql import build_subtitles_update_sql
 
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
