@@ -30,6 +30,12 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
           AUDIO_MODE: make_only
-          ITEMS_PER_SOURCE: 3
-          MAX_EPISODES_PER_LANGUAGE: 5
+          TEST_MODE: false
         run: python src/main.py
+
+      - name: Upload subtitles SQL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: subtitles-sql
+          path: subtitles_updates_*.sql
+          if-no-files-found: ignore
