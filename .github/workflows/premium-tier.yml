@@ -30,6 +30,6 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
           AUDIO_MODE: make_only
-          TEST_MODE: true
+          TEST_MODE: false
           PIPELINE_MODE: premium
         run: python src/main.py
