@@ -20,7 +20,29 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
+      - name: Check RSSHub custom routes
+        run: |
+          curl -f --retry 3 --retry-delay 5 https://rsshub-production-55fa.up.railway.app/mpia/sport-training
+          curl -f --retry 3 --retry-delay 5 https://rsshub-production-55fa.up.railway.app/mpia/coachesvoice
+          curl -f --retry 3 --retry-delay 5 https://rsshub-production-55fa.up.railway.app/mpia/athletic-football
+          curl -f --retry 3 --retry-delay 5 https://rsshub-production-55fa.up.railway.app/mpia/racingpost-news
+          curl -f --retry 3 --retry-delay 5 https://rsshub-production-55fa.up.railway.app/mpia/ucl
+
+      - name: Run premium pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          WORKER_URL: ${{ secrets.WORKER_URL }}
+          WORKER_API_KEY: ${{ secrets.WORKER_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+          AUDIO_MODE: make_only
+          TEST_MODE: false
+          PIPELINE_MODE: premium
+        run: python src/main.py
       - name: Run premium pipeline
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
