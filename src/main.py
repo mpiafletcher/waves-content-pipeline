@@ -17,7 +17,7 @@ TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
 TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
 TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
-PIPELINE_MODE = os.getenv("PIPELINE_MODE", "free").lower()
+PIPELINE_MODE = os.getenv("PIPELINE_MODE", "premium").lower()
 
 
 # defaults producción
