@@ -1,8 +1,8 @@
 from premium.fetch_segments import fetch_content_segments
 from premium.fetch_items import fetch_items_for_segment
-from premium.dedupe import dedupe_items
+from common.dedupe import dedupe_items
 from premium.rank import rank_items
-from generator import generate_story
+from common.generator import generate_story
 
 
 def run_premium_pipeline():
