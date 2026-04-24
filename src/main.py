@@ -7,8 +7,8 @@ from free.fetch_sources import fetch_sources
 from free.rss_parser import parse_rss, is_recent
 from common.dedupe import build_dedupe_key, build_variant_key
 from common.generator import generate_story
-from client.putter_client import send_to_putter
-from client.make_client import send_to_make
+from clients.putter_client import send_to_putter
+from clients.make_client import send_to_make
 from common.validators import validate_episode, validate_tts_payload
 from common.subtitles_sql import build_subtitles_update_sql
 
