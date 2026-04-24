@@ -287,11 +287,6 @@ def run():
 
         print(f"Generated subtitles SQL file: {filename}")
 
-#if __name__ == "__main__":
- #   premium_episodes = run_premium_pipeline()
-  #  print(f"Generated {len(premium_episodes)} premium episodes")
-   # run()
-    
 if __name__ == "__main__":
     if PIPELINE_MODE == "premium":
         from premium.pipeline import run_premium_pipeline
@@ -301,10 +296,19 @@ if __name__ == "__main__":
             build_tts_payload=build_tts_payload,
             send_audio=send_audio,
         )
-
         print(f"Generated {len(premium_episodes)} premium episodes")
 
-        # FUTURO: correr ambos cuando premium esté validado
-        # run()
+    elif PIPELINE_MODE == "all":
+        from premium.pipeline import run_premium_pipeline
+
+        premium_episodes = run_premium_pipeline(
+            build_timed_subtitles=build_timed_subtitles,
+            build_tts_payload=build_tts_payload,
+            send_audio=send_audio,
+        )
+        print(f"Generated {len(premium_episodes)} premium episodes")
+
+        run()
+
     else:
         run()
