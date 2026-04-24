@@ -15,7 +15,7 @@ def run_premium_pipeline():
 
         items = fetch_items_for_segment(segment)
 
-        items = dedupe_items(items)
+       items = dedupe_segment_items(items)
 
         items = rank_items(items)
 
