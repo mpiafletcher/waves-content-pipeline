@@ -4,6 +4,12 @@ from common.dedupe import dedupe_segment_items
 from premium.rank import rank_items
 from common.generator import generate_story
 
+import os
+
+TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
+
+MAX_SEGMENTS = 1 if TEST_MODE else 999999
+MAX_ITEMS_PER_SEGMENT = 1 if TEST_MODE else 3
 
 def run_premium_pipeline():
     segments = fetch_content_segments()
