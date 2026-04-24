@@ -1,0 +1,35 @@
+name: Waves Premium Tier Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 8,20 * * *'
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run premium pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          WORKER_URL: ${{ secrets.WORKER_URL }}
+          WORKER_API_KEY: ${{ secrets.WORKER_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+          AUDIO_MODE: make_only
+          TEST_MODE: true
+          PIPELINE_MODE: premium
+        run: python src/main.py
