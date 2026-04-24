@@ -31,6 +31,7 @@ jobs:
           MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
           AUDIO_MODE: make_only
           TEST_MODE: false
+          PIPELINE_MODE: free
         run: python src/main.py
 
       - name: Upload subtitles SQL artifact
