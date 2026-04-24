@@ -1,4 +1,4 @@
-from rss_parser import parse_rss, is_recent
+from free.rss_parser import parse_rss, is_recent
 
 
 def fetch_items_for_segment(segment, hours=24):
