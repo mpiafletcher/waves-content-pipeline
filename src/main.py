@@ -11,7 +11,6 @@ from putter_client import send_to_putter
 from make_client import send_to_make
 from validators import validate_episode, validate_tts_payload
 from subtitles_sql import build_subtitles_update_sql
-from premium.pipeline import run_premium_pipeline
 
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
@@ -295,6 +294,7 @@ def run():
     
 if __name__ == "__main__":
     if PIPELINE_MODE == "premium":
+        from premium.pipeline import run_premium_pipeline
         premium_episodes = run_premium_pipeline()
         print(f"Generated {len(premium_episodes)} premium episodes")
     else:
