@@ -3,7 +3,7 @@ name: Waves Free Tier Pipeline
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 8,20 * * *'
+   - cron: "0 6 * * *"
 
 jobs:
   run-pipeline:
