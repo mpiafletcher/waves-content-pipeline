@@ -13,7 +13,7 @@ from common.validators import validate_episode, validate_tts_payload
 from common.subtitles_sql import build_subtitles_update_sql
 
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
-AUDIO_MODE = os.getenv("AUDIO_MODE", "make_only").lower()
+AUDIO_MODE = os.getenv("AUDIO_MODE", "putter_with_fallback").lower()
 TEST_SOURCE_NAME = os.getenv("TEST_SOURCE_NAME", "").strip()
 TEST_LANGUAGE = os.getenv("TEST_LANGUAGE", "").strip()
 PIPELINE_MODE = os.getenv("PIPELINE_MODE", "free").lower()
