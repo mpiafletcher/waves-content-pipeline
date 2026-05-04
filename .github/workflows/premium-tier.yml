@@ -39,7 +39,7 @@ jobs:
           WORKER_API_KEY: ${{ secrets.WORKER_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
-          AUDIO_MODE: make_only
+          AUDIO_MODE: putter_with_fallback
           TEST_MODE: false
           PIPELINE_MODE: premium
         run: python src/main.py
