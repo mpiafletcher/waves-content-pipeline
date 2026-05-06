@@ -40,8 +40,10 @@ def run_premium_pipeline(build_timed_subtitles, build_tts_payload, send_audio):
             source_language = item.get("source_language") or segment["source_language"]
             output_language = segment["language"]
 
-            skip, reason = should_skip_rss_item(item)
-
+            skip_result = should_skip_rss_item(item)
+            skip = skip_result.get("skip", False)
+            reason = skip_result.get("reason")
+            
             if skip:
                 print({
                     "skipped": True,
