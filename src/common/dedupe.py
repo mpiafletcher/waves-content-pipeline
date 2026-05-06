@@ -126,3 +126,29 @@ def dedupe_segment_items(items: list[dict], threshold: float = 0.85) -> list[dic
     items = hard_dedupe_items(items)
     items = soft_dedupe_items(items, threshold=threshold)
     return items
+
+STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "to", "of", "in", "on", "for", "with",
+    "from", "by", "as", "at", "is", "are", "was", "were", "be", "been", "it",
+    "this", "that", "after", "before", "over", "under", "into", "about",
+    "el", "la", "los", "las", "un", "una", "unos", "unas", "y", "o", "pero",
+    "de", "del", "en", "por", "para", "con", "sin", "sobre", "tras", "ante",
+}
+
+
+def build_story_fingerprint(title: str, summary: str = "", max_terms: int = 10) -> str:
+    text = normalize_title(f"{title} {summary}")
+
+    words = [
+        w for w in text.split()
+        if len(w) >= 4 and w not in STOPWORDS
+    ]
+
+    # unique words, stable order
+    seen = []
+    for w in words:
+        if w not in seen:
+            seen.append(w)
+
+    important = seen[:max_terms]
+    return "_".join(important) or normalize_title(title)
