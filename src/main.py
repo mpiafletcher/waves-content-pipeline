@@ -165,6 +165,7 @@ def run():
 
     produced_per_language = {}
     episodes_with_subtitles = []
+    seen_dedupe_keys = set()
 
     for source in sources:
         output_language = source["language"]
@@ -207,6 +208,18 @@ def run():
             
             dedupe_key = build_dedupe_key(item["title"], item["url"])
             variant_key = build_variant_key(dedupe_key, output_language)
+            if variant_key in seen_dedupe_keys:
+                print({
+                    "skipped": True,
+                    "reason": "duplicate_variant_key_in_current_run",
+                    "source": source.get("source_name"),
+                    "title": item.get("title"),
+                    "url": item.get("url"),
+                    "dedupe_key": variant_key,
+                })
+                continue
+            
+            seen_dedupe_keys.add(variant_key)
 
             story = generate_story(
                 item=item,
