@@ -195,8 +195,10 @@ def run():
             if produced_per_language[output_language] >= MAX_EPISODES_PER_LANGUAGE:
                 break
            
-            skip, reason = should_skip_rss_item(item)
-
+            skip_result = should_skip_rss_item(item)
+            skip = skip_result.get("skip", False)
+            reason = skip_result.get("reason")
+            
             if skip:
                 print({
                     "skipped": True,
