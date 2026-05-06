@@ -5,13 +5,13 @@ from datetime import datetime
 
 from free.fetch_sources import fetch_sources
 from free.rss_parser import parse_rss, is_recent
-from common.dedupe import build_dedupe_key, build_variant_key
 from common.generator import generate_story
 from clients.putter_client import send_to_putter
 from clients.make_client import send_to_make
 from common.validators import validate_episode, validate_tts_payload
 from common.subtitles_sql import build_subtitles_update_sql
 from common.rss_filters import should_skip_rss_item
+from common.dedupe import build_dedupe_key, build_variant_key, build_story_fingerprint
 
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 AUDIO_MODE = os.getenv("AUDIO_MODE", "putter_with_fallback").lower()
@@ -166,6 +166,7 @@ def run():
     produced_per_language = {}
     episodes_with_subtitles = []
     seen_dedupe_keys = set()
+    seen_story_fingerprints = set()
 
     for source in sources:
         output_language = source["language"]
@@ -208,6 +209,7 @@ def run():
             
             dedupe_key = build_dedupe_key(item["title"], item["url"])
             variant_key = build_variant_key(dedupe_key, output_language)
+
             if variant_key in seen_dedupe_keys:
                 print({
                     "skipped": True,
@@ -218,8 +220,28 @@ def run():
                     "dedupe_key": variant_key,
                 })
                 continue
-            
+
             seen_dedupe_keys.add(variant_key)
+
+            story_fingerprint = build_story_fingerprint(
+                item.get("title", ""),
+                item.get("summary") or item.get("description") or ""
+            )
+
+            story_variant_key = f"{story_fingerprint}_{output_language}"
+
+            if story_variant_key in seen_story_fingerprints:
+                print({
+                    "skipped": True,
+                    "reason": "duplicate_story_fingerprint_in_current_run",
+                    "source": source.get("source_name"),
+                    "title": item.get("title"),
+                    "url": item.get("url"),
+                    "story_fingerprint": story_variant_key,
+                })
+                continue
+
+            seen_story_fingerprints.add(story_variant_key)
 
             story = generate_story(
                 item=item,
