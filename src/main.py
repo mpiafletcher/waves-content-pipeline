@@ -11,6 +11,7 @@ from clients.putter_client import send_to_putter
 from clients.make_client import send_to_make
 from common.validators import validate_episode, validate_tts_payload
 from common.subtitles_sql import build_subtitles_update_sql
+from common.rss_filters import should_skip_rss_item
 
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 AUDIO_MODE = os.getenv("AUDIO_MODE", "putter_with_fallback").lower()
@@ -191,7 +192,19 @@ def run():
         for item in items:
             if produced_per_language[output_language] >= MAX_EPISODES_PER_LANGUAGE:
                 break
+           
+            skip, reason = should_skip_rss_item(item)
 
+            if skip:
+                print({
+                    "skipped": True,
+                    "reason": reason,
+                    "source": source.get("source_name"),
+                    "title": item.get("title"),
+                    "url": item.get("url"),
+                })
+                continue
+            
             dedupe_key = build_dedupe_key(item["title"], item["url"])
             variant_key = build_variant_key(dedupe_key, output_language)
 
