@@ -7,7 +7,7 @@ from common.dedupe import dedupe_segment_items, build_dedupe_key, build_variant_
 from premium.rank import rank_items
 from common.generator import generate_story
 from common.validators import validate_episode
-
+from common.rss_filters import should_skip_rss_item
 
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 
@@ -40,6 +40,18 @@ def run_premium_pipeline(build_timed_subtitles, build_tts_payload, send_audio):
             source_language = item.get("source_language") or segment["source_language"]
             output_language = segment["language"]
 
+            skip, reason = should_skip_rss_item(item)
+
+            if skip:
+                print({
+                    "skipped": True,
+                    "reason": reason,
+                    "source": item.get("source_name"),
+                    "title": item.get("title"),
+                    "url": item.get("url"),
+                })
+                continue
+            
             story = generate_story(
                 item=item,
                 category=segment["topic"],
