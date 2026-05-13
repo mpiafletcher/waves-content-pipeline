@@ -41,7 +41,8 @@ Rules:
 - Keep it fluid for audio.
 - Aim for roughly 60 to 120 seconds.
 - Return ONLY valid JSON.
-- The final title, caption, subtopic, script and subtitles must all be in the output language.
+- The final title, caption, subtopic, and script must all be in the output language.
+
 For free-tier episodes, the subtopic must be a short, highly informative label that helps a user instantly understand what the episode is about.
 
 Prefer:
@@ -77,18 +78,8 @@ Return JSON with exactly these fields:
   "caption": "1 short teaser sentence",
   "subtopic": "specific_subtopic",
   "script": "full audio script",
-  "estimated_duration_sec": 90,
-  "subtitles": [
-    {{ "text": "subtitle chunk 1" }},
-    {{ "text": "subtitle chunk 2" }}
-  ]
+  "estimated_duration_sec": 90
 }}
-
-Subtitle rules:
-- subtitles must use the exact wording of the script
-- no paraphrasing
-- split naturally for pacing
-- 6 to 10 chunks
 """
 
     try:
@@ -117,8 +108,8 @@ Subtitle rules:
         if not data.get("estimated_duration_sec"):
             data["estimated_duration_sec"] = 90
 
-        if not isinstance(data.get("subtitles"), list):
-            data["subtitles"] = []
+        # Subtitles disabled for now to reduce generation/token cost.
+        data["subtitles"] = []
 
         return data
 
