@@ -317,7 +317,7 @@ def run():
             payload = build_tts_payload(script, episode)
 
             print("SCRIPT PREVIEW:", script[:250])
-            print("SUBTITLES PREVIEW:", json.dumps(episode["subtitles_json"][:2], indent=2, ensure_ascii=False))
+            # print("SUBTITLES PREVIEW:", json.dumps(episode["subtitles_json"][:2], indent=2, ensure_ascii=False))
             print("PAYLOAD PATH:", payload["path"])
 
             send_audio(payload)
