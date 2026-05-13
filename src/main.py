@@ -278,13 +278,15 @@ def run():
             except Exception:
                 duration_sec = 90.0
 
-            # 1.5 = más rápido
-            timed_subtitles = build_timed_subtitles(
-                story.get("subtitles", []),
-                duration_sec,
-                output_language,
-                speed_multiplier=1.5
-            )
+            # TEMPORARILY DISABLED TO REDUCE OPENAI TOKEN COSTS
+            # timed_subtitles = build_timed_subtitles(
+            #     story.get("subtitles", []),
+            #     duration_sec,
+            #     output_language,
+            #     speed_multiplier=1.5
+            # )
+            
+            timed_subtitles = []
 
             episode = {
                 "tier": "free",
