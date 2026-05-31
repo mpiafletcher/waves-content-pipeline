@@ -1,14 +1,12 @@
+```yaml
 name: Waves Premium Tier Pipeline
-
 on:
   workflow_dispatch:
   schedule:
     - cron: '30 5 * * *'
-
 concurrency:
   group: waves-premium-pipeline
   cancel-in-progress: false
-
 env:
   RSSHUB_BASE: https://rsshub-production-55fa.up.railway.app
   SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -19,34 +17,29 @@ env:
   MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
   TEST_MODE: false
   PIPELINE_MODE: premium
-
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
       - name: Wake Railway service
         run: |
-          echo "Pinging Railway to wake service..."
-          curl -s --max-time 60 \
-            --retry 5 --retry-delay 10 --retry-all-errors \
-            "$RSSHUB_BASE/mpia/sport-training" -o /dev/null
-          echo "Railway is up, waiting for full readiness..."
-          sleep 5
-
+          echo "Pinging Railway root to wake service..."
+          curl -s --max-time 90 \
+            --retry 8 --retry-delay 15 \
+            --retry-all-errors \
+            "$RSSHUB_BASE/" -o /dev/null
+          echo "RSSHub root responded, waiting for custom routes to load..."
+          sleep 20
       - name: Check RSSHub custom routes
         run: |
           routes=(
@@ -62,13 +55,12 @@ jobs:
               || { echo "FAILED: $route"; exit 1; }
           done
           echo "All routes healthy"
-
       - name: Run pipeline — putter with fallback
         env:
           AUDIO_MODE: putter_with_fallback
         run: python src/main.py
-
       - name: Run pipeline — make only
         env:
           AUDIO_MODE: make_only
         run: python src/main.py
+```
