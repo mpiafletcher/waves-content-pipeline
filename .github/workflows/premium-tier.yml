@@ -1,4 +1,3 @@
-```yaml
 name: Waves Premium Tier Pipeline
 on:
   workflow_dispatch:
@@ -34,33 +33,22 @@ jobs:
       - name: Wake Railway service
         run: |
           echo "Pinging Railway root to wake service..."
-          curl -s --max-time 90 \
-            --retry 8 --retry-delay 15 \
-            --retry-all-errors \
-            "$RSSHUB_BASE/" -o /dev/null
+          curl -s --max-time 90 --retry 8 --retry-delay 15 --retry-all-errors "$RSSHUB_BASE/" -o /dev/null
           echo "RSSHub root responded, waiting for custom routes to load..."
           sleep 20
       - name: Check RSSHub custom routes
         run: |
-          routes=(
-            "mpia/sport-training"
-            "mpia/coachesvoice"
-            "mpia/athletic-football"
-            "mpia/racingpost-news"
-            "mpia/ucl"
-          )
+          routes=("mpia/sport-training" "mpia/coachesvoice" "mpia/athletic-football" "mpia/racingpost-news" "mpia/ucl")
           for route in "${routes[@]}"; do
             echo "Checking $route..."
-            curl -f --retry 3 --retry-delay 5 "$RSSHUB_BASE/$route" -o /dev/null \
-              || { echo "FAILED: $route"; exit 1; }
+            curl -f --retry 3 --retry-delay 5 "$RSSHUB_BASE/$route" -o /dev/null || { echo "FAILED: $route"; exit 1; }
           done
           echo "All routes healthy"
-      - name: Run pipeline — putter with fallback
+      - name: Run pipeline - putter with fallback
         env:
           AUDIO_MODE: putter_with_fallback
         run: python src/main.py
-      - name: Run pipeline — make only
+      - name: Run pipeline - make only
         env:
           AUDIO_MODE: make_only
         run: python src/main.py
-```
