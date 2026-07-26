@@ -39,3 +39,4 @@ jobs:
           name: subtitles-sql
           path: subtitles_updates_*.sql
           if-no-files-found: ignore
+
