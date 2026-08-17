@@ -130,13 +130,13 @@ def send_audio(payload):
         print("➡️ AUDIO_MODE=make_only")
         make_result = send_to_make(payload)
         print("MAKE RESULT:", make_result)
-        return
+        return make_result
 
     if AUDIO_MODE == "putter_only":
         print("➡️ AUDIO_MODE=putter_only")
         putter_result = send_to_putter(payload)
         print("PUTTER RESULT:", putter_result)
-        return
+        return putter_result
 
     print("➡️ AUDIO_MODE=putter_with_fallback")
     putter_result = send_to_putter(payload)
@@ -144,10 +144,12 @@ def send_audio(payload):
     if putter_result.get("success"):
         print("✅ PUTTER SUCCESS")
         print(putter_result)
+        return putter_result
     else:
         print("⚠️ PUTTER FAILED → FALLBACK TO MAKE")
         make_result = send_to_make(payload)
         print("MAKE RESULT:", make_result)
+        return make_result
 
 
 def run():
@@ -194,11 +196,11 @@ def run():
         for item in items:
             if produced_per_language[output_language] >= MAX_EPISODES_PER_LANGUAGE:
                 break
-           
+
             skip_result = should_skip_rss_item(item)
             skip = skip_result.get("skip", False)
             reason = skip_result.get("reason")
-            
+
             if skip:
                 print({
                     "skipped": True,
@@ -208,7 +210,7 @@ def run():
                     "url": item.get("url"),
                 })
                 continue
-            
+
             dedupe_key = build_dedupe_key(item["title"], item["url"])
             variant_key = build_variant_key(dedupe_key, output_language)
 
@@ -285,7 +287,7 @@ def run():
             #     output_language,
             #     speed_multiplier=1.5
             # )
-            
+
             timed_subtitles = []
 
             episode = {
@@ -317,15 +319,24 @@ def run():
             payload = build_tts_payload(script, episode)
 
             print("SCRIPT PREVIEW:", script[:250])
-            # print("SUBTITLES PREVIEW:", json.dumps(episode["subtitles_json"][:2], indent=2, ensure_ascii=False))
             print("PAYLOAD PATH:", payload["path"])
 
-            send_audio(payload)
+            tts_response = send_audio(payload)
+
+            # Extract subtitles_json from Worker response
+            subtitles_from_worker = []
+            if tts_response and isinstance(tts_response, dict):
+                subtitles_from_worker = tts_response.get("subtitles_json", [])
 
             episodes_with_subtitles.append({
                 "dedupe_key": episode["dedupe_key"],
-                "subtitles_json": episode["subtitles_json"]
+                "subtitles_json": subtitles_from_worker
             })
+
+            if subtitles_from_worker:
+                print(f"✅ Got {len(subtitles_from_worker)} subtitle cues from Worker")
+            else:
+                print("⚠️ No subtitles returned from Worker")
 
             produced_per_language[output_language] += 1
 
@@ -338,6 +349,7 @@ def run():
             f.write(sql_content)
 
         print(f"Generated subtitles SQL file: {filename}")
+
 
 if __name__ == "__main__":
     if PIPELINE_MODE == "premium":
