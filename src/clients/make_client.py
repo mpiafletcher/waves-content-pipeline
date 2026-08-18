@@ -18,10 +18,22 @@ def send_to_make(payload):
             timeout=90
         )
 
+        if res.ok:
+            try:
+                data = res.json()
+            except Exception:
+                data = res.text
+
+            return {
+                "success": True,
+                "status": res.status_code,
+                "data": data
+            }
+
         return {
-            "success": res.ok,
+            "success": False,
             "status": res.status_code,
-            "response": res.text
+            "error": res.text
         }
 
     except Exception as e:
