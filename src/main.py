@@ -323,13 +323,12 @@ def run():
 
             tts_response = send_audio(payload)
 
-            # Extract subtitles_json from Worker response
+            # Extract subtitles_json from Worker response (wrapped in 'data' field)
             subtitles_from_worker = []
             if tts_response and isinstance(tts_response, dict):
                 worker_data = tts_response.get("data", {})
                 if isinstance(worker_data, dict):
-                     subtitles_from_worker = worker_data.get("subtitles_json", [])
-
+                    subtitles_from_worker = worker_data.get("subtitles_json", [])
 
             episodes_with_subtitles.append({
                 "dedupe_key": episode["dedupe_key"],
