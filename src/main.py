@@ -326,7 +326,10 @@ def run():
             # Extract subtitles_json from Worker response
             subtitles_from_worker = []
             if tts_response and isinstance(tts_response, dict):
-                subtitles_from_worker = tts_response.get("subtitles_json", [])
+                worker_data = tts_response.get("data", {})
+                if isinstance(worker_data, dict):
+                     subtitles_from_worker = worker_data.get("subtitles_json", [])
+
 
             episodes_with_subtitles.append({
                 "dedupe_key": episode["dedupe_key"],
