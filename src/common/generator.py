@@ -2,6 +2,7 @@ from openai import OpenAI
 import os
 import json
 import re
+from common.captions import script_subtitles
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -108,8 +109,8 @@ Return JSON with exactly these fields:
         if not data.get("estimated_duration_sec"):
             data["estimated_duration_sec"] = 90
 
-        # Subtitles disabled for now to reduce generation/token cost.
-        data["subtitles"] = []
+        # Derive caption text locally: no additional model tokens or API calls.
+        data["subtitles"] = script_subtitles(data.get("script"))
 
         return data
 

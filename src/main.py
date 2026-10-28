@@ -6,6 +6,7 @@ from datetime import datetime
 from free.fetch_sources import fetch_sources
 from free.rss_parser import parse_rss, is_recent
 from common.generator import generate_story
+from common.captions import build_timed_subtitles
 from clients.putter_client import send_to_putter
 from clients.make_client import send_to_make
 from common.validators import validate_episode, validate_tts_payload
@@ -35,44 +36,6 @@ def slugify(value: str) -> str:
     value = re.sub(r"[^a-z0-9]+", "_", value)
     value = re.sub(r"_+", "_", value).strip("_")
     return value or "general"
-
-
-def build_timed_subtitles(subtitles, total_duration_sec, language="en", speed_multiplier=1.0):
-    if not isinstance(subtitles, list) or not subtitles:
-        return []
-
-    cleaned = []
-    for seg in subtitles:
-        text = (seg.get("text") or "").strip()
-        if text:
-            cleaned.append(text)
-
-    if not cleaned:
-        return []
-
-    try:
-        total_duration_sec = float(total_duration_sec)
-    except Exception:
-        total_duration_sec = 90.0
-
-    effective_duration_ms = (total_duration_sec * 1000.0) / speed_multiplier
-    chunk_duration_ms = effective_duration_ms / len(cleaned)
-
-    timed = []
-    cursor = 0.0
-
-    for i, text in enumerate(cleaned):
-        start_ms = cursor
-        end_ms = effective_duration_ms if i == len(cleaned) - 1 else cursor + chunk_duration_ms
-
-        timed.append({
-            "text": text,
-            "start_ms": start_ms,
-            "end_ms": end_ms
-        })
-        cursor = end_ms
-
-    return timed
 
 
 def build_tts_payload(script: str, episode: dict) -> dict:
@@ -280,15 +243,12 @@ def run():
             except Exception:
                 duration_sec = 90.0
 
-            # TEMPORARILY DISABLED TO REDUCE OPENAI TOKEN COSTS
-            # timed_subtitles = build_timed_subtitles(
-            #     story.get("subtitles", []),
-            #     duration_sec,
-            #     output_language,
-            #     speed_multiplier=1.5
-            # )
-
-            timed_subtitles = []
+            timed_subtitles = build_timed_subtitles(
+                story.get("subtitles", []),
+                duration_sec,
+                output_language,
+                speed_multiplier=1.5,
+            )
 
             episode = {
                 "tier": "free",
@@ -332,7 +292,7 @@ def run():
 
             episodes_with_subtitles.append({
                 "dedupe_key": episode["dedupe_key"],
-                "subtitles_json": subtitles_from_worker
+                "subtitles_json": subtitles_from_worker or timed_subtitles
             })
 
             if subtitles_from_worker:
